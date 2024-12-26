@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Frame Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+   <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+    <h1>Photo Frame Editor</h1>
+
+    <div class="instructions">
+        <h2>How to Use the Photo Frame Editor</h2>
+        <ol>
+            <li><strong>Upload Your Photo:</strong> Click the blue "Upload Photo" button to select an image from your device.</li>
+            <li><strong>Adjust Your Photo:</strong> Once uploaded, you can:
+                <ul>
+                    <li>Drag the photo to reposition it within the frame</li>
+                    <li>Use the corner handles to resize the photo</li>
+                    <li>Use the circular handle above the photo to rotate it freely</li>
+                </ul>
+            </li>
+            <li><strong>Use the Editing Tools:</strong>
+                <ul>
+                    <li>"Rotate Left" - Rotates the photo 90° counterclockwise</li>
+                    <li>"Rotate Right" - Rotates the photo 90° clockwise</li>
+                    <li>"Flip Horizontal" - Mirrors the photo left to right</li>
+                    <li>"Flip Vertical" - Mirrors the photo top to bottom</li>
+                </ul>
+            </li>
+            <li><strong>Save Your Work:</strong> Click the "Download" button to save your framed photo to your device</li>
+        </ol>
+        <div class="tip">
+            <strong>💡 Tip:</strong> For best results, make sure your photo is properly centered and scaled within the frame before downloading.
+        </div>
+    </div>
+
+    <div class="button-container">
+        <label class="upload-btn"
+            style="padding: 10px 20px; background-color: #008CBA; color: white; border-radius: 4px; cursor: pointer;">
+            Upload Photo
+            <input type="file" id="uploadInput" accept="image/*">
+        </label>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="button-container">
+        <button onclick="rotateLeft()">Rotate Left</button>
+        <button onclick="rotateRight()">Rotate Right</button>
+        <button onclick="flipHorizontal()">Flip Horizontal</button>
+        <button onclick="flipVertical()">Flip Vertical</button>
+        <button onclick="downloadImage()">Download</button>
+    </div>
+
+    <script>
+        let frameObject = null;
+        
+        // Initialize canvas
+        const canvas = new fabric.Canvas('canvas', {
+            width: 600,
+            height: 600
+        });
+
+        // Load frame
+        fabric.Image.fromURL('/static/uploads/frame.png', function (frame) {
+            frame.scaleToWidth(canvas.width);
+            frame.selectable = false;
+            frameObject = frame;
+            canvas.add(frame);
+            canvas.renderAll();
+        });
+
+        // Handle file upload
+        document.getElementById('uploadInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('photo', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Load uploaded image
+                    fabric.Image.fromURL('/static/uploads/' + data.filename, function (img) {
+                        // Scale image to fit within frame while maintaining aspect ratio
+                        const scale = Math.min(
+                            (canvas.width * 0.8) / img.width,
+                            (canvas.height * 0.8) / img.height
+                        );
+                        img.scale(scale);
+
+                        // Center the image
+                        img.center();
+
+                        // Make image interactive
+                        img.setControlsVisibility({
+                            mt: true, mb: true, ml: true, mr: true,
+                            mtr: true
+                        });
+
+                        // Remove any existing uploaded image
+                        canvas.getObjects().forEach(obj => {
+                            if (obj !== frameObject) {
+                                canvas.remove(obj);
+                            }
+                        });
+
+                        // Add image and ensure frame is on top
+                        canvas.add(img);
+                        if (frameObject) {
+                            canvas.remove(frameObject);
+                            canvas.add(frameObject);
+                        }
+                        
+                        canvas.setActiveObject(img);
+                        canvas.renderAll();
+
+                        // Ensure frame stays on top when objects are modified
+                        canvas.on('object:modified', function() {
+                            if (frameObject) {
+                                canvas.remove(frameObject);
+                                canvas.add(frameObject);
+                            }
+                            canvas.renderAll();
+                        });
+                    });
+                });
+        });
+
+        // Image manipulation functions
+        function rotateLeft() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject !== frameObject) {
+                activeObject.rotate(activeObject.angle - 90);
+                canvas.renderAll();
+            }
+        }
+
+        function rotateRight() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject !== frameObject) {
+                activeObject.rotate(activeObject.angle + 90);
+                canvas.renderAll();
+            }
+        }
+
+        function flipHorizontal() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject !== frameObject) {
+                activeObject.flipX = !activeObject.flipX;
+                canvas.renderAll();
+            }
+        }
+
+        function flipVertical() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject !== frameObject) {
+                activeObject.flipY = !activeObject.flipY;
+                canvas.renderAll();
+            }
+        }
+
+        function downloadImage() {
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                quality: 1
+            });
+
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    imageData: dataURL
+                })
+            })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'framed_photo.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                });
+        }
+    </script>
+</body>
+
+</html>
