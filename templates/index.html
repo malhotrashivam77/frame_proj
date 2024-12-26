@@ -6,65 +6,270 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Frame Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-   <link rel="stylesheet" href="static/style.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #f5f6fa;
+            --card-background: #ffffff;
+            --text-color: #2c3e50;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin: 2rem auto;
+        }
+
+        .instructions {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+
+        .instructions h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5em;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .instructions ol {
+            margin-left: 1.5rem;
+        }
+
+        .instructions li {
+            margin-bottom: 1rem;
+        }
+
+        .instructions ul {
+            margin: 0.5rem 0 0.5rem 1.5rem;
+        }
+
+        .instructions ul li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .tip {
+            background-color: #ecf0f1;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        .editor-section {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .canvas-container {
+            margin: 1.5rem auto;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        button, .upload-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .upload-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            display: inline-block;
+        }
+
+        .upload-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            button, .upload-btn {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            .instructions {
+                padding: 1.5rem;
+            }
+
+            .editor-section {
+                padding: 1rem;
+            }
+
+            .canvas-container {
+                margin: 1rem auto;
+            }
+
+            /* Adjust canvas size for mobile */
+            canvas {
+                max-width: 100%;
+                height: auto !important;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #1a1a1a;
+                --card-background: #2d2d2d;
+                --text-color: #ffffff;
+                --primary-color: #3498db;
+            }
+
+            .instructions ul li {
+                color: #cccccc;
+            }
+
+            .tip {
+                background-color: #3d3d3d;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <h1>Photo Frame Editor</h1>
 
-    <div class="instructions">
-        <h2>How to Use the Photo Frame Editor</h2>
-        <ol>
-            <li><strong>Upload Your Photo:</strong> Click the blue "Upload Photo" button to select an image from your device.</li>
-            <li><strong>Adjust Your Photo:</strong> Once uploaded, you can:
-                <ul>
-                    <li>Drag the photo to reposition it within the frame</li>
-                    <li>Use the corner handles to resize the photo</li>
-                    <li>Use the circular handle above the photo to rotate it freely</li>
-                </ul>
-            </li>
-            <li><strong>Use the Editing Tools:</strong>
-                <ul>
-                    <li>"Rotate Left" - Rotates the photo 90° counterclockwise</li>
-                    <li>"Rotate Right" - Rotates the photo 90° clockwise</li>
-                    <li>"Flip Horizontal" - Mirrors the photo left to right</li>
-                    <li>"Flip Vertical" - Mirrors the photo top to bottom</li>
-                </ul>
-            </li>
-            <li><strong>Save Your Work:</strong> Click the "Download" button to save your framed photo to your device</li>
-        </ol>
-        <div class="tip">
-            <strong>💡 Tip:</strong> For best results, make sure your photo is properly centered and scaled within the frame before downloading.
+    <div class="app-container">
+        <div class="instructions">
+            <h2>How to Use</h2>
+            <ol>
+                <li><strong>Upload Your Photo:</strong> Click the blue "Upload Photo" button to select an image from your device.</li>
+                <li><strong>Adjust Your Photo:</strong> Once uploaded, you can:
+                    <ul>
+                        <li>Drag the photo to reposition it</li>
+                        <li>Use corner handles to resize</li>
+                        <li>Use the top circle to rotate</li>
+                    </ul>
+                </li>
+                <li><strong>Edit Your Photo:</strong>
+                    <ul>
+                        <li>Rotate Left/Right - Turn 90°</li>
+                        <li>Flip Horizontal/Vertical - Mirror image</li>
+                    </ul>
+                </li>
+                <li><strong>Save Your Work:</strong> Click "Download" to save your creation</li>
+            </ol>
+            <div class="tip">
+                <strong>💡 Pro Tip:</strong> Center your photo within the frame for the best results.
+            </div>
+        </div>
+
+        <div class="editor-section">
+            <div class="button-container">
+                <label class="upload-btn">
+                    Upload Photo
+                    <input type="file" id="uploadInput" accept="image/*">
+                </label>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="button-container">
+                <button onclick="rotateLeft()">Rotate Left</button>
+                <button onclick="rotateRight()">Rotate Right</button>
+                <button onclick="flipHorizontal()">Flip Horizontal</button>
+                <button onclick="flipVertical()">Flip Vertical</button>
+                <button onclick="downloadImage()">Download</button>
+            </div>
         </div>
     </div>
 
-    <div class="button-container">
-        <label class="upload-btn"
-            style="padding: 10px 20px; background-color: #008CBA; color: white; border-radius: 4px; cursor: pointer;">
-            Upload Photo
-            <input type="file" id="uploadInput" accept="image/*">
-        </label>
-    </div>
-
-    <div class="canvas-container">
-        <canvas id="canvas"></canvas>
-    </div>
-
-    <div class="button-container">
-        <button onclick="rotateLeft()">Rotate Left</button>
-        <button onclick="rotateRight()">Rotate Right</button>
-        <button onclick="flipHorizontal()">Flip Horizontal</button>
-        <button onclick="flipVertical()">Flip Vertical</button>
-        <button onclick="downloadImage()">Download</button>
-    </div>
-
     <script>
+        // Previous JavaScript code remains the same
         let frameObject = null;
         
-        // Initialize canvas
+        // Initialize canvas with responsive dimensions
         const canvas = new fabric.Canvas('canvas', {
-            width: 600,
-            height: 600
+            width: 400,
+            height: 400
         });
 
         // Load frame
@@ -76,7 +281,7 @@
             canvas.renderAll();
         });
 
-        // Handle file upload
+        // Previous event listeners and functions remain the same
         document.getElementById('uploadInput').addEventListener('change', function (e) {
             const file = e.target.files[0];
             const formData = new FormData();
@@ -88,32 +293,24 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    // Load uploaded image
                     fabric.Image.fromURL('/static/uploads/' + data.filename, function (img) {
-                        // Scale image to fit within frame while maintaining aspect ratio
                         const scale = Math.min(
                             (canvas.width * 0.8) / img.width,
                             (canvas.height * 0.8) / img.height
                         );
                         img.scale(scale);
-
-                        // Center the image
                         img.center();
-
-                        // Make image interactive
                         img.setControlsVisibility({
                             mt: true, mb: true, ml: true, mr: true,
                             mtr: true
                         });
 
-                        // Remove any existing uploaded image
                         canvas.getObjects().forEach(obj => {
                             if (obj !== frameObject) {
                                 canvas.remove(obj);
                             }
                         });
 
-                        // Add image and ensure frame is on top
                         canvas.add(img);
                         if (frameObject) {
                             canvas.remove(frameObject);
@@ -123,7 +320,6 @@
                         canvas.setActiveObject(img);
                         canvas.renderAll();
 
-                        // Ensure frame stays on top when objects are modified
                         canvas.on('object:modified', function() {
                             if (frameObject) {
                                 canvas.remove(frameObject);
@@ -135,7 +331,6 @@
                 });
         });
 
-        // Image manipulation functions
         function rotateLeft() {
             const activeObject = canvas.getActiveObject();
             if (activeObject && activeObject !== frameObject) {
